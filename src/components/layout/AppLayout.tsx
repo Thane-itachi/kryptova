@@ -6,7 +6,6 @@ import {
   Sun, User as UserIcon, Wallet, X,
 } from 'lucide-react';
 import { useAuth, useTheme } from '../../context/AuthContext';
-import { useMarket } from '../../context/MarketContext';
 import { useNotifications } from '../../context/NotificationsContext';
 import { Badge } from '../ui';
 import SearchDialog from './SearchDialog';
@@ -29,27 +28,6 @@ const NAV_BOTTOM = [
   { to: '/app/profile', label: 'Profile', icon: UserIcon },
   { to: '/app/settings', label: 'Settings', icon: SettingsIcon },
 ];
-
-function LivePill() {
-  const { status } = useMarket();
-  if (status === 'live')
-    return (
-      <Badge tone="up" className="font-mono">
-        ● LIVE
-      </Badge>
-    );
-  if (status === 'demo')
-    return (
-      <Badge tone="accent" className="font-mono">
-        ● DEMO MARKET DATA
-      </Badge>
-    );
-  return (
-    <Badge tone="down" className="font-mono">
-      ● MARKET DATA UNAVAILABLE
-    </Badge>
-  );
-}
 
 /** Install-app button — appears once the browser offers installation
  * (beforeinstallprompt) or always on iOS with Add-to-Home-Screen guidance. */
@@ -217,7 +195,6 @@ export default function AppLayout() {
             <kbd className="hidden rounded border border-line px-1.5 font-mono text-[10px] md:block">⌘K</kbd>
           </button>
           <div className="ml-auto flex items-center gap-2">
-            <LivePill />
             <NotificationCenter />
             <InstallButton />
             <button onClick={toggleTheme} className="rounded-lg p-2 text-muted hover:bg-panel" aria-label="Toggle theme">
