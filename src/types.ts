@@ -56,6 +56,17 @@ export interface Txn {
   reason?: 'manual' | 'take_profit' | 'stop_loss';
 }
 
+/** A price alert watched by AlertsContext. */
+export interface PriceAlert {
+  id: string;
+  symbol: string;
+  target: number;
+  direction: 'above' | 'below';
+  status: 'active' | 'triggered';
+  created_at: number;
+  triggered_at?: number;
+}
+
 /** A Take-Profit / Stop-Loss order. Executed server-side by /api/orders. */
 export interface TPOrder {
   id: string;

@@ -2,11 +2,16 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Star, ArrowLeft } from 'lucide-react';
 import { useMarket } from '../context/MarketContext';
 import { usePortfolio } from '../context/PortfolioContext';
+import { useAuth } from '../context/AuthContext';
 import { findAsset } from '../lib/assets';
 import { fmtCompact, fmtPrice, fmtTime } from '../lib/format';
 import { Badge, Button, Card, EmptyState, Skeleton } from '../components/ui';
 import { PriceChange } from '../components/market-bits';
 import PriceChart from '../components/charts/PriceChart';
+import type { ChartTrade } from '../components/charts/CandleChart';
+import OrderBook from '../components/market/OrderBook';
+import AlertsPanel from '../components/market/AlertsPanel';
+import { binancePair } from '../lib/binanceStream';
 
 export default function AssetPage() {
   const { symbol: symbolParam } = useParams<{ symbol: string }>();
@@ -15,10 +20,17 @@ export default function AssetPage() {
   const assetDef = findAsset(rawSymbol);
 
   const { status, getQuote, loading: marketLoading } = useMarket();
-  const { watchlist, addToWatchlist, removeFromWatchlist } = usePortfolio();
+  const { watchlist, addToWatchlist, removeFromWatchlist, transactions } = usePortfolio();
+  const { user } = useAuth();
 
   const quote = getQuote(rawSymbol);
   const inWatchlist = watchlist.includes(rawSymbol);
+
+  const chartTrades: ChartTrade[] = user
+    ? transactions
+        .filter((t) => t.symbol === rawSymbol && t.status === 'completed')
+        .map((t) => ({ t: new Date(t.created_at).getTime(), price: t.price, side: t.side === 'buy' ? 'buy' : 'sell' }))
+    : [];
 
   if (!assetDef) {
     return (
@@ -89,18 +101,21 @@ export default function AssetPage() {
           <ArrowLeft size={16} /> Back to Markets
         </Link>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleWatchlistToggle}
-          className="gap-1.5"
-        >
-          <Star
-            size={16}
-            className={inWatchlist ? 'fill-yellow-400 text-yellow-400' : 'text-muted'}
-          />
-          <span>{inWatchlist ? 'Watchlisted' : 'Add to Watchlist'}</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          {displayQuote.kind === 'crypto' && <AlertsPanel symbol={rawSymbol} />}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleWatchlistToggle}
+            className="gap-1.5"
+          >
+            <Star
+              size={16}
+              className={inWatchlist ? 'fill-yellow-400 text-yellow-400' : 'text-muted'}
+            />
+            <span>{inWatchlist ? 'Watchlisted' : 'Add to Watchlist'}</span>
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -145,9 +160,16 @@ export default function AssetPage() {
         </div>
       </div>
 
-      <Card className="p-4 sm:p-6">
-        <PriceChart symbol={displayQuote.symbol} kind={displayQuote.kind} />
-      </Card>
+      <div className="grid gap-4 lg:grid-cols-[1fr_260px]">
+        <Card className="p-4 sm:p-6">
+          <PriceChart symbol={displayQuote.symbol} kind={displayQuote.kind} trades={chartTrades} />
+        </Card>
+        {displayQuote.kind === 'crypto' && binancePair(rawSymbol) && (
+          <Card className="hidden overflow-hidden lg:block">
+            <OrderBook symbol={rawSymbol} height={460} />
+          </Card>
+        )}
+      </div>
 
       <div>
         <h2 className="text-sm font-semibold uppercase text-muted tracking-wider mb-3">

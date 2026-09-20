@@ -62,6 +62,11 @@ service cloud.firestore {
       match /notifications/{id} {
         allow read, write: if isOwner(uid);
       }
+
+      // Price alerts: owner has full control
+      match /alerts/{id} {
+        allow read, write: if isOwner(uid);
+      }
     }
 
     // Server-side price cache: readable by signed-in users, written only by

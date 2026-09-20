@@ -346,6 +346,18 @@ export async function fetchSeries(
           // fall through to demo
         }
       } else {
+        // Swing (1D+): true daily OHLCV from Binance REST first (real wicks
+        // + traded volume on every timeframe); CoinGecko OHLC as fallback.
+        const pair = binancePair(symbol);
+        if (pair) {
+          const days = RANGE_DAYS[range];
+          const klines = await fetchKlines(pair, '1d', Math.min(days + 2, 1000));
+          if (klines && klines.length >= 2) {
+            const candles: Candle[] = klines.map((k) => ({ t: k.t, o: k.o, h: k.h, l: k.l, c: k.c, v: k.v }));
+            const points = candles.map((c) => ({ t: c.t, p: c.c }));
+            return { points, candles, isDemo: false };
+          }
+        }
         // Swing (1D+): real OHLC candles straight from CoinGecko
         try {
           const candles = await liveCryptoOHLC(asset.id, days);

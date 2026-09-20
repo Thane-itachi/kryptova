@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationsProvider } from './context/NotificationsContext';
 import { MarketProvider } from './context/MarketContext';
+import { AlertsProvider } from './context/AlertsContext';
 import { PortfolioProvider } from './context/PortfolioContext';
 import AppLayout from './components/layout/AppLayout';
 
@@ -68,6 +69,7 @@ export default function App() {
     <AuthProvider>
       <NotificationsProvider>
         <MarketProvider>
+          <AlertsProvider>
           <PortfolioProvider>
             <ScrollToTop />
             <Suspense fallback={<PageLoader />}>
@@ -100,6 +102,7 @@ export default function App() {
               </Routes>
             </Suspense>
           </PortfolioProvider>
+          </AlertsProvider>
         </MarketProvider>
       </NotificationsProvider>
     </AuthProvider>
