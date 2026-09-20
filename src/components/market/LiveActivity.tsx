@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Activity, Radio, Wallet } from 'lucide-react';
+import { Radio } from 'lucide-react';
 import { useMarket } from '../../context/MarketContext';
 import { usePortfolio } from '../../context/PortfolioContext';
 import { fmtQty, fmtTime } from '../../lib/format';
 import { PriceChange } from '../market-bits';
-import { Badge, Card, EmptyState } from '../ui';
 
 interface MarketMoveEvent {
   id: string;
@@ -69,7 +68,7 @@ export default function LiveActivity() {
   const userTradeEvents: UserTradeEvent[] = useMemo(() => {
     return transactions.slice(0, 5).map((txn) => ({
       id: `trade-${txn.id}`,
-      type: 'trade',
+      type: 'trade' as const,
       timestamp: new Date(txn.created_at).getTime(),
       side: txn.side,
       symbol: txn.symbol,
@@ -84,49 +83,56 @@ export default function LiveActivity() {
   }, [marketEvents, userTradeEvents]);
 
   return (
-    <Card className="p-5 flex flex-col h-full">
-      <div className="flex items-center justify-between pb-3 border-b border-line mb-4">
+    <section className="flex h-full flex-col">
+      <div className="flex items-center justify-between border-b border-line pb-3">
         <div className="flex items-center gap-2">
-          <Radio size={18} className="text-primary-500 animate-pulse" />
-          <h3 className="font-bold text-base tracking-tight">LIVE Market Activity</h3>
+          <Radio size={14} className={`text-primary-400 ${status === 'live' ? 'animate-pulse' : ''}`} />
+          <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-txt">
+            Live activity
+          </h3>
         </div>
-        <Badge tone={status === 'live' ? 'up' : 'accent'}>
-          {status === 'live' ? 'LIVE' : 'DEMO'}
-        </Badge>
+        <span
+          className={`inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest ${
+            status === 'live' ? 'text-up' : 'text-primary-400'
+          }`}
+        >
+          <span
+            className={`inline-block h-1.5 w-1.5 rounded-full ${
+              status === 'live' ? 'animate-pulse bg-up' : 'bg-primary-400'
+            }`}
+          />
+          {status === 'live' ? 'Live' : 'Demo'}
+        </span>
       </div>
 
       {allEvents.length === 0 ? (
-        <div className="my-auto py-8">
-          <EmptyState
-            title="Waiting for market updates…"
-            message="Real-time market price movements and your simulated demo trades will appear here automatically."
-          />
+        <div className="py-8">
+          <p className="text-xs text-muted">
+            Waiting for market updates — live price ticks and your simulated trades will appear
+            here automatically.
+          </p>
         </div>
       ) : (
-        <div className="space-y-2.5 overflow-y-auto max-h-[420px] pr-1">
+        <div className="max-h-[420px] divide-y divide-line/60 overflow-y-auto pr-1">
           {allEvents.map((event) => {
             if (event.type === 'trade') {
               return (
-                <div
-                  key={event.id}
-                  className="flex items-center justify-between gap-3 p-3 rounded-lg bg-panel border border-line/60 transition-colors"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="p-1.5 rounded-md bg-primary-500/10 text-primary-500 shrink-0">
-                      <Wallet size={15} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-txt truncate">
-                        {event.side === 'buy' ? 'Bought' : 'Sold'} {fmtQty(event.quantity)} {event.symbol}
-                      </p>
-                      <div className="mt-0.5">
-                        <Badge tone="accent" className="text-[10px] py-0 px-1.5">
-                          YOUR TRADE (SIMULATED)
-                        </Badge>
-                      </div>
-                    </div>
+                <div key={event.id} className="flex items-center justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <p className="text-xs text-txt">
+                      <span
+                        className={`font-mono font-bold uppercase tracking-wide ${
+                          event.side === 'buy' ? 'text-up' : 'text-down'
+                        }`}
+                      >
+                        {event.side}
+                      </span>{' '}
+                      <span className="font-mono font-semibold">{fmtQty(event.quantity)}</span>{' '}
+                      <span className="font-mono font-bold">{event.symbol}</span>
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-muted">Your trade · simulated</p>
                   </div>
-                  <span className="font-mono text-[11px] text-muted shrink-0">
+                  <span className="shrink-0 font-mono text-[11px] text-muted">
                     {fmtTime(event.timestamp)}
                   </span>
                 </div>
@@ -134,34 +140,19 @@ export default function LiveActivity() {
             }
 
             return (
-              <div
-                key={event.id}
-                className="flex items-center justify-between gap-3 p-3 rounded-lg bg-surface border border-line/60 transition-colors"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="p-1.5 rounded-md bg-panel text-muted shrink-0">
-                    <Activity size={15} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-xs text-txt">{event.symbol}</span>
-                      <PriceChange value={event.deltaPct} />
-                    </div>
-                    <div className="mt-0.5">
-                      <Badge tone={event.isLive ? 'up' : 'neutral'} className="text-[10px] py-0 px-1.5">
-                        {event.isLive ? 'LIVE PRICE TICK' : 'DEMO PRICE TICK'}
-                      </Badge>
-                    </div>
-                  </div>
+              <div key={event.id} className="flex items-center justify-between gap-3 py-3">
+                <div className="flex items-baseline gap-2 min-w-0">
+                  <span className="font-mono text-xs font-bold text-txt">{event.symbol}</span>
+                  <PriceChange value={event.deltaPct} />
                 </div>
-                <span className="font-mono text-[11px] text-muted shrink-0">
-                  {fmtTime(event.timestamp)}
-                </span>
+                <div className="flex items-baseline gap-3 shrink-0">
+                  <span className="font-mono text-[11px] text-muted">{fmtTime(event.timestamp)}</span>
+                </div>
               </div>
             );
           })}
         </div>
       )}
-    </Card>
+    </section>
   );
 }
